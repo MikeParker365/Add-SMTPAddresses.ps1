@@ -1,11 +1,11 @@
 ﻿<#
 .SYNOPSIS
-Add-SMTPAddresses.ps1 - Add SMTP addresses to Office 365 users for a new domain name
+Add-SMTPAddresses.ps1 - Add SMTP addresses to Exchange On-Premises users for a new domain name
 
 .DESCRIPTION 
-This PowerShell script will add new SMTP addresses to existing Office 365 mailbox users
+This PowerShell script will add new SMTP addresses to existing Exchange mailbox users
 for a new domain. This script fills the need to make bulk email address changes
-in Exchange Online when Email Address Policies are not available.
+in Exchange On-premises when Email Address Policies are not applied to a large number of users.
 
 .OUTPUTS
 Results are output to a text log file.
@@ -51,8 +51,15 @@ check out Exchange Server Pro.
 * Website:	http://exchangeserverpro.com
 * Twitter:	http://twitter.com/exchservpro
 
+Updated by: Mike Parker
+
+    - My blog: http://mikeparker365.co.uk/
+    - Twitter: https://twitter.com/MikeParker365
+    - LinkedIn: https://uk.linkedin.com/in/mikeparkero365
+
 Change Log
 V1.00, 21/05/2015 - Initial version
+V2.00, 24/02/2016 - Mike Parker Initial Update
 #>
 
 #requires -version 2
@@ -97,7 +104,10 @@ Function Write-Logfile()
 # Script
 #...................................
 
-#Check if new domain exists in Office 365 tenant
+$start = Get-Date
+Write-Logfile "Script started at $start";
+
+#Check if new domain exists in Exchange org.
 
 $chkdom = Get-AcceptedDomain $domain
 
@@ -107,11 +117,23 @@ if (!($chkdom))
     EXIT
 }
 
-#Get the list of mailboxes in the Office 365 tenant
-$Mailboxes = @(Get-Mailbox -ResultSize Unlimited)
+#Get the list of mailboxes not using the email address policy in the Exchange org.
+$Mailboxes = @(Get-Mailbox -Filter {(EmailAddressPolicyEnabled -eq $False) -and (EmailAddresses -notlike '*$tenantName')} -ResultSize Unlimited)
+
+#Set up variables for progress bar and end output
+$itemCount = $mailboxes
+$itemCount = $itemCount.count
+$processedCount = 1
+$success = 0
+$failure = 0
  
 Foreach ($Mailbox in $Mailboxes)
 {
+    $error.clear()
+
+   	Write-Progress -Activity "Processing.." -Status "User $processedCount of $itemCount" -PercentComplete ($processedCount / $itemCount * 100)
+
+    try{
 
     Write-Host "******* Processing: $mailbox"
     Write-Logfile "******* Processing: $mailbox"
@@ -178,7 +200,30 @@ Foreach ($Mailbox in $Mailboxes)
     }
 
     Write-Logfile ""
+    }
+    catch{
+    Write-Logfile "There was an error processing $Mailbox.Alias. Please review the log."
+
+    }
+    finally{
+        if(!$error){
+            $success++
+            }
+        else{
+            $failure++
+            }
+    }
 }
+
+Write-Logfile "$ItemCount records processed"
+Write-Logfile "$success records processed successfully."
+Write-Logfile "$failure records errored during processing." 
+
+$end = Get-Date;
+Write-Logfile "Script ended at $end";
+
+$diff = New-TimeSpan -Start $start -End $end
+Write-Logfile "Time taken $($diff.Hours)h : $($diff.Minutes)m : $($diff.Seconds)s ";
 
 #...................................
 # Finished
