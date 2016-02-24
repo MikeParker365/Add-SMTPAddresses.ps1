@@ -59,7 +59,8 @@ Updated by: Mike Parker
 
 Change Log
 V1.00, 21/05/2015 - Initial version
-V2.00, 24/02/2016 - Mike Parker Initial Update
+V2.00, 24/02/2016 - Mike Parker Initial Update - Added progress bar and count to end of script.
+                  - Added necessary filter to work on only Exchange on-prem mailboxes without  
 #>
 
 #requires -version 2
