@@ -60,7 +60,7 @@ Updated by: Mike Parker
 Change Log
 V1.00, 21/05/2015 - Initial version
 V2.00, 24/02/2016 - Mike Parker Initial Update - Added progress bar and count to end of script.
-                  - Added necessary filter to work on only Exchange on-prem mailboxes without  
+                  - Added necessary filter to work on only Exchange on-prem mailboxes without Email Address Policies applied.  
 #>
 
 #requires -version 2
@@ -70,8 +70,11 @@ param (
 	
 	[Parameter( Mandatory=$true )]
 	[string]$Domain,
-
-    [Parameter( Mandatory=$false )]
+		
+	[Parameter( Mandatory=$false )]
+	[switch]$Csv,
+    
+	[Parameter( Mandatory=$false )]
     [switch]$Commit,
 
     [Parameter( Mandatory=$false )]
@@ -119,11 +122,34 @@ if (!($chkdom))
 }
 
 #Get the list of mailboxes not using the email address policy in the Exchange org.
-$Mailboxes = @(Get-Mailbox -Filter {(EmailAddressPolicyEnabled -eq $False) -and (EmailAddresses -notlike '*$tenantName')} -ResultSize Unlimited)
+
+If($csv){
+	Write-Logfile "Loading users to process from CSV..."
+
+	$csvUsers = Import-Csv $Csv
+
+	$Mailboxes = Foreach($user in $csvUsers){
+		Get-Mailbox $user.EmailAddress -EA:SilentlyContinue
+	}
+
+	# Check the number of users matches the CSV
+	If($Mailboxes.Count -eq $csvUsers.Count){
+		Write-Logfile "Users collected successfully"
+
+	}
+	Else{
+		Write-Logfile "Could not collecte all users. Please review the CSV file before continuing..."
+		Break
+	}
+}
+
+else{
+	Write-Logfile "Processing all users without Email Address Policy in Exchange Org..."
+	$Mailboxes = @(Get-Mailbox -Filter {(EmailAddressPolicyEnabled -eq $False) -and (EmailAddresses -notlike '*$tenantName')} -ResultSize Unlimited)
+	}
 
 #Set up variables for progress bar and end output
-$itemCount = $mailboxes
-$itemCount = $itemCount.count
+$itemCount = $mailboxes.Count
 $processedCount = 1
 $success = 0
 $failure = 0
