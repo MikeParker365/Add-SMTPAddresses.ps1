@@ -72,7 +72,7 @@ param (
 	[string]$Domain,
 		
 	[Parameter( Mandatory=$false )]
-	[switch]$Csv,
+	[string]$Csv,
     
 	[Parameter( Mandatory=$false )]
     [switch]$Commit,
@@ -240,6 +240,7 @@ Foreach ($Mailbox in $Mailboxes)
             $failure++
             }
     }
+	$processedCount++
 }
 
 Write-Logfile "$ItemCount records processed"
