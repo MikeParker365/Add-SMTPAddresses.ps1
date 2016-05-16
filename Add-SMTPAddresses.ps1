@@ -13,6 +13,9 @@ Results are output to a text log file.
 .PARAMETER Domain
 The new domain name to add SMTP addresses to each Office 365 mailbox user.
 
+.PARAMETER Csv
+Specifies that you want to specify the list of users from a CSV file.
+
 .PARAMETER MakePrimary
 Specifies that the new email address should be made the primary SMTP address for the mailbox user.
 
@@ -34,6 +37,10 @@ to all mailboxes. Use the log file to evaluate the outcome before you re-run wit
 .\Add-SMTPAddresses.ps1 -Domain office365bootcamp.com -MakePrimary -Commit
 This will add the new alias@office365bootcamp.com as a primary email address
 to all mailboxes.
+
+.EXAMPLE
+.\Add-SMTPAddresses.ps1 -Domain office365bootcamp.com -CSV C:\csv\users.csv -Commit
+This will add the new alias@office365bootcamp.com as a proxy address to a list of users imported from CSV.
 
 .NOTES
 Written by: Paul Cunningham
@@ -60,7 +67,8 @@ Updated by: Mike Parker
 Change Log
 V1.00, 21/05/2015 - Initial version
 V2.00, 24/02/2016 - Mike Parker Initial Update - Added progress bar and count to end of script.
-                  - Added necessary filter to work on only Exchange on-prem mailboxes without Email Address Policies applied.  
+                  - Added necessary filter to work on only Exchange on-prem mailboxes without Email Address Policies applied. 
+V2.10, 24/04/2016 - Added functionality for specifying users with a CSV file. 
 #>
 
 #requires -version 2
